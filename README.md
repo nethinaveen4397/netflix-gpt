@@ -1,6 +1,9 @@
 # netflix
 - create-react-app
 - tailwindcss-configuration
+- Header
+- Login Form
+- SignUp Form
 
 
 # features
@@ -10,7 +13,7 @@
 - browse(after authentication)
     - Header
     - Main movie
-        - Trailer in Backgrounf
+        - Trailer in Background
         - Title & Description
         - Movie suggestions
             - Movie List * n

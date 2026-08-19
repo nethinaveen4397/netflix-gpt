@@ -1,8 +1,84 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Header from "./Header";
+import { checkValidData } from "../utils/Validate";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile,
+} from "firebase/auth";
+import { auth } from "../utils/firebase";
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { addUser } from "../utils/userSlice";
 
 const Login = () => {
   const [isSignInForm, setSignInForm] = useState(true);
+  const [errorMessage, setErrorMessage] = useState(null);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const email = useRef();
+  const password = useRef();
+  const name = useRef(null);
+
+  const handleButtonClick = () => {
+    //validate the form data
+    const errorMessage = checkValidData(
+      email.current.value,
+      password.current.value,
+    );
+    setErrorMessage(errorMessage);
+
+    if (errorMessage) return;
+    if (!isSignInForm) {
+      createUserWithEmailAndPassword(
+        auth,
+        email.current.value,
+        password.current.value,
+      )
+        .then((userCredential) => {
+          const user = userCredential.user;
+          updateProfile(user, {
+            displayName: name.current.value,
+          })
+            .then(() => {
+              const { uid, email, displayName } = auth.currentUser;
+              dispatch(
+                addUser({ uid: uid, email: email, displayName: displayName }),
+              );
+              navigate("/browse");
+            })
+            .catch((error) => {
+              setErrorMessage(error.message);
+            });
+
+          console.log(user);
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          console.log(setErrorMessage(errorCode + " - " + errorMessage));
+        });
+    } else {
+      signInWithEmailAndPassword(
+        auth,
+        email.current.value,
+        password.current.value,
+      )
+        .then((userCredential) => {
+          // Signed in
+          const user = userCredential.user;
+          navigate("/browse");
+          console.log(user);
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          setErrorMessage(" User not found ");
+        });
+    }
+  };
+
   const toggleSignInForm = () => {
     setSignInForm(!isSignInForm);
   };
@@ -15,35 +91,57 @@ const Login = () => {
         alt="background"
       />
 
-      <forn className="w-3/12 absolute p-12 bg-black my-56 mx-auto right-0 left-0 bg-opacity-75 text-white rounded-lg">
-        <h1 className="font-bold text-2xl py-4">{isSignInForm? "Sign In":"SignUp"}</h1>
-        {!isSignInForm && ( <input
-          type="text"
-          placeholder="Full Name"
-          className="p-2 my-2 bg-gray-900 w-full"
-        />)}
-        
-          {!isSignInForm && ( <input
-          type="text"
-          placeholder="Mobile Number"
-          className="p-2 my-2 bg-gray-900 w-full"
-        />)}
+      <form
+        onSubmit={(e) => e.preventDefault()}
+        className="w-3/12 absolute p-12 bg-black my-56 mx-auto right-0 left-0 bg-opacity-75 text-white rounded-lg"
+      >
+        <h1 className="font-bold text-2xl py-4">
+          {isSignInForm ? "Sign In" : "SignUp"}
+        </h1>
+        {!isSignInForm && (
+          <input
+            ref={name}
+            type="text"
+            placeholder="Full Name"
+            className="p-2 my-2 bg-gray-900 w-full"
+          />
+        )}
+
+        {!isSignInForm && (
+          <input
+            type="text"
+            placeholder="Mobile Number"
+            className="p-2 my-2 bg-gray-900 w-full"
+          />
+        )}
 
         <input
+          ref={email}
           type="text"
           placeholder="Email Address"
           className="p-2 my-2 bg-gray-900 w-full"
         />
         <input
+          ref={password}
           type="password"
           placeholder="Password"
           className="p-2 my-2 bg-gray-900 w-full"
         />
-        <button className="p-2 my-4 bg-red-800 w-full rounded-lg">
-          {isSignInForm? "Sign In":"Sign Up"}
+
+        <p className="text-red-400 font-bold w-6/12">{errorMessage}</p>
+
+        <button
+          className="p-2 my-4 bg-red-800 w-full rounded-lg"
+          onClick={handleButtonClick}
+        >
+          {isSignInForm ? "Sign In" : "Sign Up"}
         </button>
-        <p onClick={toggleSignInForm} className="cursor-pointer">{isSignInForm? "New to netflix? SignUp":"Already register user sign In"} </p>
-      </forn>
+        <p onClick={toggleSignInForm} className="cursor-pointer">
+          {isSignInForm
+            ? "New to netflix? SignUp"
+            : "Already register user sign In"}{" "}
+        </p>
+      </form>
     </div>
   );
 };

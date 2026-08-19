@@ -4,6 +4,14 @@
 - Header
 - Login Form
 - SignUp Form
+- Validation
+- Firebase setuo
+- Firebase deployment
+- create signup user account
+- Implement sign In user
+- create redux store with userSlice
+- Implemented Signout
+- update profile
 
 
 # features
